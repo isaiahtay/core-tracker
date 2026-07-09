@@ -93,7 +93,7 @@
       grid-template-columns: repeat(3, 1fr);
       background: var(--surface);
       border-top: 1px solid var(--border);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
     }
     .nav-btn {
       display: flex;
@@ -645,18 +645,7 @@
   <script>
   // ── constants ─────────────────────────────────────────
   const QUOTES = [
-    "Show up every day. Even the bad days count.",
-    "Your core is your foundation. Build it daily.",
-    "Discipline is choosing what you want most over what you want now.",
-    "Small consistent actions compound into big results.",
-    "The only bad workout is the one that didn't happen.",
-    "You don't have to be extreme — just consistent.",
-    "Every rep brings you closer to where you want to be.",
-    "Your future self will thank you for this.",
-    "Strength isn't just physical. It's showing up.",
-    "Progress over perfection, every single time.",
-    "Core strength is built one session at a time.",
-    "Hard work always beats talent when talent doesn't show up.",
+    `"You're just being lazy. Get a sweat going and you're going to feel pumped. Come on man, you've done this a million times." — Joe Rogan`,
   ];
 
   const WEEKDAYS  = ['S','M','T','W','T','F','S'];
@@ -863,7 +852,7 @@
     const done    = session.exercises.filter(e => e.done).length;
     const allDone = total > 0 && done === total;
 
-    c.appendChild(el('div', 'quote-card', `"${getQuote()}"`));
+    c.appendChild(el('div', 'quote-card', getQuote()));
 
     if (session.completed) {
       const banner = el('div', 'session-complete');
@@ -1282,7 +1271,12 @@
 
     const delBtn = el('button', 'btn-danger', 'Remove');
     delBtn.addEventListener('click', () => {
+      const removedId = data.routine[ui.modal.index].id;
       data.routine.splice(ui.modal.index, 1);
+      const td = todayStr();
+      if (data.sessions[td] && !data.sessions[td].completed) {
+        data.sessions[td].exercises = data.sessions[td].exercises.filter(e => e.id !== removedId);
+      }
       saveData(); ui.modal = null; render();
     });
 
