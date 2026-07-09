@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Core">
+  <meta name="theme-color" content="#0d0d0d">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <title>Core</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: #2c2c2c;
+      --accent: #f97316;
+      --accent-dim: rgba(249,115,22,0.12);
+      --accent-border: rgba(249,115,22,0.3);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.1);
+      --green-border: rgba(34,197,94,0.35);
+      --text: #f0f0f0;
+      --muted: #666;
+      --radius: 14px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── header ─────────────────────────── */
+    .header {
+      padding: 54px 20px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header-left h1 {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+    .header-left .date {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 7px 13px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* ── content ─────────────────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 24px;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* ── bottom nav ──────────────────────── */
+    .nav {
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 11px 0;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg { width: 20px; height: 20px; }
+
+    /* ── quote ───────────────────────────── */
+    .quote-card {
+      margin: 4px 16px 14px;
+      padding: 12px 15px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--accent);
+      font-style: italic;
+      line-height: 1.45;
+    }
+
+    /* ── mode toggle ─────────────────────── */
+    .mode-toggle {
+      display: flex;
+      margin: 0 16px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 9px 8px;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+      letter-spacing: 0.1px;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── progress bar ────────────────────── */
+    .progress-row {
+      margin: 0 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .progress-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* ── exercise card ───────────────────── */
+    .exercise-list {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .exercise-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .exercise-card.done {
+      border-color: var(--green-border);
+      background: var(--green-dim);
+    }
+    .exercise-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .exercise-name {
+      font-size: 16px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .exercise-card.done .exercise-name {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    @keyframes checkPop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    .check-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: transparent;
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .check-btn.done {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+      animation: checkPop 0.25s ease;
+    }
+
+    .exercise-inputs {
+      display: flex;
+      gap: 10px;
+    }
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .input-group label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+    .input-group input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 700;
+      padding: 9px 8px;
+      width: 100%;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-appearance: none;
+    }
+    .input-group input:focus { outline: none; border-color: var(--accent); }
+    .input-group input:disabled { opacity: 0.5; }
+
+    /* ── add to today button ─────────────── */
+    .add-today-btn {
+      margin: 12px 16px 0;
+      width: calc(100% - 32px);
+      padding: 14px;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    /* ── complete button ─────────────────── */
+    .complete-btn {
+      margin: 20px 16px 0;
+      width: calc(100% - 32px);
+      padding: 17px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .complete-btn:active { opacity: 0.8; }
+    .complete-btn:disabled {
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    /* ── session complete banner ─────────── */
+    .session-complete {
+      margin: 0 16px 16px;
+      padding: 22px 20px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .session-complete .big-emoji { font-size: 40px; line-height: 1; }
+    .session-complete h2 { font-size: 19px; font-weight: 700; margin: 10px 0 4px; color: var(--green); }
+    .session-complete p { font-size: 13px; color: var(--muted); }
+
+    .reset-btn {
+      margin: 12px 16px 20px;
+      width: calc(100% - 32px);
+      padding: 14px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .reset-btn:active { border-color: #ef4444; color: #ef4444; }
+
+    /* ── empty state ─────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+    /* ── stats ───────────────────────────── */
+    .stats-section { padding: 0 16px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    /* ── month calendar ──────────────────── */
+    .calendar-wrap { margin-bottom: 24px; }
+
+    /* month/year picker row */
+    .cal-pickers {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .cal-picker {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      padding: 11px 12px;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+    }
+    .cal-picker:focus { outline: none; border-color: var(--accent); }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-bottom: 3px;
+    }
+    .cal-wd {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 5px;
+      background: var(--surface);
+    }
+    .cal-day.done { background: var(--green); }
+    .cal-day.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .cal-day.future { background: #252525; }
+    .cal-day.empty { background: transparent; }
+
+    /* ── chart ───────────────────────────── */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 12px 12px;
+      margin-bottom: 22px;
+      position: relative;
+      height: 190px;
+    }
+
+    /* ── routine ─────────────────────────── */
+    .routine-list {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .routine-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .routine-info { flex: 1; min-width: 0; }
+    .routine-name {
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .routine-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .routine-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* minimal icon buttons */
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: none;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .icon-btn:active { opacity: 0.6; }
+    .icon-btn.danger:active { color: #ef4444; border-color: rgba(239,68,68,0.4); }
+    .icon-btn svg { display: block; }
+
+    .add-btn {
+      margin: 14px 16px 0;
+      width: calc(100% - 32px);
+      padding: 15px;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    .routine-note {
+      margin: 12px 16px 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* ── export ──────────────────────────── */
+    .export-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .export-btn {
+      flex: 1;
+      padding: 13px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── modal ───────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: flex-end;
+      z-index: 100;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .modal {
+      width: 100%;
+      background: #1c1c1c;
+      border-radius: 22px 22px 0 0;
+      padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .modal h2 { font-size: 19px; font-weight: 700; margin-bottom: 20px; }
+    .modal-field { margin-bottom: 15px; }
+    .modal-field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .modal-field input, .modal-field select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--text);
+      font-size: 16px;
+      padding: 13px 14px;
+      -webkit-appearance: none;
+    }
+    .modal-field input:focus, .modal-field select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-primary {
+      flex: 1; padding: 15px;
+      background: var(--accent); color: #fff;
+      font-size: 16px; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-secondary {
+      flex: 1; padding: 15px;
+      background: var(--surface2); color: var(--text);
+      font-size: 16px; font-weight: 600;
+      border: none; border-radius: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-danger {
+      flex: 1; padding: 15px;
+      background: #ef4444; color: #fff;
+      font-size: 16px; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+  // ── constants ─────────────────────────────────────────
+  const QUOTES = [
+    "Show up every day. Even the bad days count.",
+    "Your core is your foundation. Build it daily.",
+    "Discipline is choosing what you want most over what you want now.",
+    "Small consistent actions compound into big results.",
+    "The only bad workout is the one that didn't happen.",
+    "You don't have to be extreme — just consistent.",
+    "Every rep brings you closer to where you want to be.",
+    "Your future self will thank you for this.",
+    "Strength isn't just physical. It's showing up.",
+    "Progress over perfection, every single time.",
+    "Core strength is built one session at a time.",
+    "Hard work always beats talent when talent doesn't show up.",
+  ];
+
+  const WEEKDAYS  = ['S','M','T','W','T','F','S'];
+  const MONTHS    = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const FULL_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  // SVG icons (minimal, stroked)
+  const ICON_EDIT  = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5l2.5 2.5-7 7H2V8.5l7-7z"/><path d="M7.5 3l2 2"/></svg>`;
+  const ICON_TRASH = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h10"/><path d="M4.5 3.5V2h4v1.5"/><path d="M3.5 3.5l.7 7.5h4.6l.7-7.5"/></svg>`;
+
+  // Nav icons
+  const NAV_ICONS = {
+    today:   `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L4 11h6l-1.5 7L17 9h-6.5L11 2z"/></svg>`,
+    stats:   `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="17" x2="2" y2="10"/><line x1="7" y1="17" x2="7" y2="5"/><line x1="12" y1="17" x2="12" y2="8"/><line x1="17" y1="17" x2="17" y2="3"/></svg>`,
+    routine: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="12" height="15" rx="2"/><path d="M8 3a2 2 0 0 1 4 0"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="7" y1="13" x2="11" y2="13"/></svg>`,
+  };
+
+  // ── utils ─────────────────────────────────────────────
+  const uid = () => Math.random().toString(36).slice(2, 9);
+
+  // Always use CST/CDT (America/Chicago)
+  function todayStr() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+  }
+
+  function fmtDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return `${FULL_DAYS[new Date(y, m-1, d).getDay()]}, ${MONTHS_SHORT[m-1]} ${d}`;
+  }
+
+  function addDays(str, n) {
+    const [y, m, d] = str.split('-').map(Number);
+    const date = new Date(y, m-1, d + n);
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+
+  function daysBetween(a, b) {
+    const [ay,am,ad] = a.split('-').map(Number);
+    const [by,bm,bd] = b.split('-').map(Number);
+    return (new Date(by,bm-1,bd) - new Date(ay,am-1,ad)) / 86400000;
+  }
+
+  // ── state ─────────────────────────────────────────────
+  let data = { routine: [], sessions: {} };
+  let ui   = { tab: 'today', modal: null, chart: null, calMo: null, calYr: null };
+
+  function loadData() {
+    try {
+      const s = localStorage.getItem('coreTracker_v2');
+      if (s) data = JSON.parse(s);
+    } catch(e) {}
+    if (!data.routine)  data.routine  = [];
+    if (!data.sessions) data.sessions = {};
+    if (data.routine.length === 0) {
+      data.routine = [
+        { id: uid(), name: 'Crunches',      sets: 3, reps: 20, unit: 'reps' },
+        { id: uid(), name: 'Leg Raises',    sets: 3, reps: 15, unit: 'reps' },
+        { id: uid(), name: 'Plank',         sets: 3, reps: 30, unit: 'sec'  },
+        { id: uid(), name: 'Russian Twists',sets: 3, reps: 20, unit: 'reps' },
+      ];
+      saveData();
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem('coreTracker_v2', JSON.stringify(data));
+  }
+
+  // ── session helpers ───────────────────────────────────
+  function getTodaySession() {
+    const d = todayStr();
+    if (!data.sessions[d]) {
+      data.sessions[d] = {
+        completed: false,
+        completedAt: null,
+        mode: 'routine',
+        exercises: data.routine.map(e => ({ ...e, done: false }))
+      };
+      saveData();
+    }
+
+    const session = data.sessions[d];
+
+    // In routine mode, append any new exercises added to the routine since session was created
+    if (session.mode === 'routine') {
+      const existingIds = new Set(session.exercises.map(e => e.id));
+      let changed = false;
+      data.routine.forEach(e => {
+        if (!existingIds.has(e.id)) {
+          session.exercises.push({ ...e, done: false });
+          changed = true;
+        }
+      });
+      if (changed) saveData();
+    }
+
+    return session;
+  }
+
+  function switchMode(newMode) {
+    const d = todayStr();
+    const session = data.sessions[d];
+    if (!session || session.mode === newMode || session.completed) return;
+
+    const hasProgress = session.exercises.some(e => e.done);
+    if (hasProgress && !confirm('Switching modes will clear your current progress for today. Continue?')) return;
+
+    session.mode = newMode;
+    session.exercises = newMode === 'routine'
+      ? data.routine.map(e => ({ ...e, done: false }))
+      : [];
+    saveData();
+    render();
+  }
+
+  // ── analytics helpers ─────────────────────────────────
+  function getStreak() {
+    const today = todayStr();
+    const todayDone = data.sessions[today]?.completed;
+    let streak = 0;
+    let cur = todayDone ? today : addDays(today, -1);
+    while (data.sessions[cur]?.completed) { streak++; cur = addDays(cur, -1); }
+    return streak;
+  }
+
+  function getBestStreak() {
+    const dates = Object.keys(data.sessions).filter(k => data.sessions[k].completed).sort();
+    if (!dates.length) return 0;
+    let best = 1, cur = 1;
+    for (let i = 1; i < dates.length; i++) {
+      if (daysBetween(dates[i-1], dates[i]) === 1) { cur++; if (cur > best) best = cur; }
+      else cur = 1;
+    }
+    return best;
+  }
+
+  function getTotalSessions() {
+    return Object.values(data.sessions).filter(s => s.completed).length;
+  }
+
+  function getDayVolume(dateStr) {
+    const s = data.sessions[dateStr];
+    if (!s?.completed) return 0;
+    return s.exercises.reduce((sum, e) => sum + e.sets * e.reps, 0);
+  }
+
+  function getQuote() {
+    return QUOTES[new Date().getDate() % QUOTES.length];
+  }
+
+  // ── dom helper ────────────────────────────────────────
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls)  e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  // ── render ────────────────────────────────────────────
+  function render() {
+    if (ui.chart) { ui.chart.destroy(); ui.chart = null; }
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    const streak = getStreak();
+    const header = el('div', 'header');
+    header.innerHTML = `
+      <div class="header-left">
+        <h1>CORE</h1>
+        <div class="date">${fmtDate(todayStr())}</div>
+      </div>
+      <div class="streak-badge">🔥 ${streak}</div>
+    `;
+    app.appendChild(header);
+
+    const content = el('div', 'content');
+    app.appendChild(content);
+
+    if      (ui.tab === 'today')   renderToday(content);
+    else if (ui.tab === 'stats')   renderStats(content);
+    else if (ui.tab === 'routine') renderRoutine(content);
+
+    const nav = el('div', 'nav');
+    [
+      { id: 'today',   label: 'Today'   },
+      { id: 'stats',   label: 'Stats'   },
+      { id: 'routine', label: 'Routine' },
+    ].forEach(tab => {
+      const btn = el('button', `nav-btn${ui.tab === tab.id ? ' active' : ''}`);
+      btn.innerHTML = `<span class="nav-icon">${NAV_ICONS[tab.id]}</span>${tab.label}`;
+      btn.addEventListener('click', () => { ui.tab = tab.id; render(); });
+      nav.appendChild(btn);
+    });
+    app.appendChild(nav);
+
+    if (ui.modal) renderModal(app);
+  }
+
+  // ── today tab ─────────────────────────────────────────
+  function renderToday(c) {
+    const session = getTodaySession();
+    const total   = session.exercises.length;
+    const done    = session.exercises.filter(e => e.done).length;
+    const allDone = total > 0 && done === total;
+
+    c.appendChild(el('div', 'quote-card', `"${getQuote()}"`));
+
+    if (session.completed) {
+      const banner = el('div', 'session-complete');
+      banner.innerHTML = `
+        <div class="big-emoji">🎯</div>
+        <h2>Session Complete!</h2>
+        <p>You showed up today. That's what matters.</p>
+      `;
+      c.appendChild(banner);
+
+      const resetBtn = el('button', 'reset-btn', "Reset Today's Workout");
+      resetBtn.addEventListener('click', () => {
+        if (confirm("Are You Sure You Want To Reset Today's Workout?")) {
+          delete data.sessions[todayStr()];
+          saveData();
+          render();
+        }
+      });
+      c.appendChild(resetBtn);
+    }
+
+    // Mode toggle
+    if (!session.completed) {
+      const toggle = el('div', 'mode-toggle');
+
+      const routineBtn = el('button', `mode-btn${session.mode === 'routine' ? ' active' : ''}`, 'My Routine');
+      routineBtn.addEventListener('click', () => switchMode('routine'));
+
+      const customBtn = el('button', `mode-btn${session.mode === 'custom' ? ' active' : ''}`, 'Custom Day');
+      customBtn.addEventListener('click', () => switchMode('custom'));
+
+      toggle.appendChild(routineBtn);
+      toggle.appendChild(customBtn);
+      c.appendChild(toggle);
+    }
+
+    // Progress bar
+    if (!session.completed && total > 0) {
+      const pct = Math.round((done / total) * 100);
+      const row = el('div', 'progress-row');
+      row.innerHTML = `
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">${done}/${total}</div>
+      `;
+      c.appendChild(row);
+    }
+
+    // Exercise list
+    if (total === 0 && session.mode === 'custom') {
+      const empty = el('div', 'exercise-list');
+      empty.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">➕</div>
+          Tap below to build your exercise list for today.
+        </div>
+      `;
+      c.appendChild(empty);
+    } else {
+      const list = el('div', 'exercise-list');
+      session.exercises.forEach((ex, i) => {
+        const card = el('div', `exercise-card${ex.done ? ' done' : ''}`);
+
+        const hdr = el('div', 'exercise-header');
+        const name = el('div', 'exercise-name', '');
+        name.textContent = ex.name;
+
+        const checkBtn = el('button', `check-btn${ex.done ? ' done' : ''}`, ex.done ? '✓' : '');
+        checkBtn.disabled = session.completed;
+        checkBtn.addEventListener('click', () => {
+          session.exercises[i].done = !session.exercises[i].done;
+          saveData(); render();
+        });
+
+        hdr.appendChild(name);
+        hdr.appendChild(checkBtn);
+        card.appendChild(hdr);
+
+        const inputs = el('div', 'exercise-inputs');
+        const makeGroup = (labelTxt, val, cb) => {
+          const g = el('div', 'input-group');
+          const lbl = document.createElement('label');
+          lbl.textContent = labelTxt;
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.inputMode = 'numeric'; inp.min = '1'; inp.value = val;
+          inp.disabled = session.completed;
+          inp.addEventListener('change', () => cb(parseInt(inp.value) || 1));
+          g.appendChild(lbl); g.appendChild(inp);
+          return g;
+        };
+        inputs.appendChild(makeGroup('Sets', ex.sets, v => { session.exercises[i].sets = v; saveData(); }));
+        inputs.appendChild(makeGroup(ex.unit === 'sec' ? 'Seconds' : 'Reps', ex.reps, v => { session.exercises[i].reps = v; saveData(); }));
+        card.appendChild(inputs);
+        list.appendChild(card);
+      });
+      c.appendChild(list);
+    }
+
+    // Add exercise button (custom mode only, not completed)
+    if (session.mode === 'custom' && !session.completed) {
+      const addBtn = el('button', 'add-today-btn', '+ Add Exercise');
+      addBtn.addEventListener('click', () => { ui.modal = { type: 'add-today' }; render(); });
+      c.appendChild(addBtn);
+    }
+
+    // Log session button
+    if (!session.completed) {
+      const btn = el('button', 'complete-btn');
+      btn.textContent = allDone ? 'Log Session ✓' : `Complete All Exercises First (${done}/${total})`;
+      btn.disabled = !allDone;
+      btn.addEventListener('click', () => {
+        session.completed = true;
+        session.completedAt = new Date().toISOString();
+        saveData(); render();
+      });
+      c.appendChild(btn);
+    }
+  }
+
+  // ── stats tab ─────────────────────────────────────────
+  function renderStats(c) {
+    const s = el('div', 'stats-section');
+
+    // Stat cards
+    const grid = el('div', 'stats-grid');
+    [
+      { value: getStreak(),        label: 'Streak' },
+      { value: getBestStreak(),    label: 'Best'   },
+      { value: getTotalSessions(), label: 'Total'  },
+    ].forEach(stat => {
+      grid.appendChild(el('div', 'stat-card', `
+        <div class="stat-value">${stat.value}</div>
+        <div class="stat-label">${stat.label}</div>
+      `));
+    });
+    s.appendChild(grid);
+
+    // Month toggle calendar
+    s.appendChild(el('div', 'section-title', 'Habit Calendar'));
+    const calWrap = el('div', 'calendar-wrap');
+
+    const today = todayStr();
+    const [ty, tm] = today.split('-').map(Number);
+
+    // Always snap to current month/year when opening stats
+    ui.calMo = tm - 1; // 0-indexed
+    ui.calYr = ty;
+
+    // Two pickers row
+    const pickersRow = el('div', 'cal-pickers');
+
+    const moSel = el('select', 'cal-picker');
+    MONTHS.forEach((name, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = name;
+      opt.selected = ui.calMo === idx;
+      moSel.appendChild(opt);
+    });
+    moSel.addEventListener('change', () => { ui.calMo = parseInt(moSel.value); render(); });
+
+    const yrSel = el('select', 'cal-picker');
+    [2026, 2027, 2028, 2029, 2030].forEach(yr => {
+      const opt = document.createElement('option');
+      opt.value = yr;
+      opt.textContent = yr;
+      opt.selected = ui.calYr === yr;
+      yrSel.appendChild(opt);
+    });
+    yrSel.addEventListener('change', () => { ui.calYr = parseInt(yrSel.value); render(); });
+
+    pickersRow.appendChild(moSel);
+    pickersRow.appendChild(yrSel);
+    calWrap.appendChild(pickersRow);
+
+    // Calendar grid for selected month/year
+    calWrap.appendChild(buildMonthBlock(ui.calYr, ui.calMo, today));
+
+    s.appendChild(calWrap);
+
+    // Volume chart
+    s.appendChild(el('div', 'section-title', 'Daily Volume — Last 30 Days'));
+    const chartWrap = el('div', 'chart-wrap');
+    const canvas = document.createElement('canvas');
+    canvas.id = 'volumeChart';
+    chartWrap.appendChild(canvas);
+    s.appendChild(chartWrap);
+
+    // Export / import
+    s.appendChild(el('div', 'section-title', 'Backup'));
+    const expRow = el('div', 'export-row');
+    const expBtn = el('button', 'export-btn', '⬇ Export');
+    expBtn.addEventListener('click', exportData);
+    const impBtn = el('button', 'export-btn', '⬆ Import');
+    impBtn.addEventListener('click', importData);
+    expRow.appendChild(expBtn);
+    expRow.appendChild(impBtn);
+    s.appendChild(expRow);
+
+    c.appendChild(s);
+    requestAnimationFrame(renderChart);
+  }
+
+  function buildMonthBlock(year, month, today) {
+    const block = el('div', 'month-block');
+    block.appendChild(el('div', 'month-label', `${MONTHS[month]} ${year}`));
+
+    const wdRow = el('div', 'cal-weekdays');
+    WEEKDAYS.forEach(w => wdRow.appendChild(el('div', 'cal-wd', w)));
+    block.appendChild(wdRow);
+
+    const grid = el('div', 'calendar');
+    const firstWD  = new Date(year, month, 1).getDay();
+    const daysInMo = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstWD; i++) grid.appendChild(el('div', 'cal-day empty'));
+
+    for (let d = 1; d <= daysInMo; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday  = dateStr === today;
+      const isFuture = dateStr > today;
+      const isDone   = data.sessions[dateStr]?.completed;
+      let cls = 'cal-day';
+      if (isDone)   cls += ' done';
+      if (isToday)  cls += ' today';
+      if (isFuture) cls += ' future';
+      grid.appendChild(el('div', cls));
+    }
+    block.appendChild(grid);
+    return block;
+  }
+
+  function renderChart() {
+    const canvas = document.getElementById('volumeChart');
+    if (!canvas || !window.Chart) return;
+    const today = todayStr();
+    const labels = [], values = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = addDays(today, -i);
+      const [,m,day] = d.split('-').map(Number);
+      labels.push(i === 0 ? 'Today' : (day === 1 ? `${MONTHS_SHORT[m-1]} ${day}` : `${day}`));
+      values.push(getDayVolume(d));
+    }
+    if (ui.chart) { ui.chart.destroy(); ui.chart = null; }
+    ui.chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.08)',
+          fill: true, tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#f97316',
+          pointBorderColor: 'transparent',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1a1a',
+            borderColor: '#2c2c2c',
+            borderWidth: 1,
+            titleColor: '#f0f0f0',
+            bodyColor: '#f97316',
+            callbacks: { label: ctx => ` ${ctx.raw} reps` }
+          }
+        },
+        scales: {
+          x: { ticks: { color:'#555', font:{size:10}, maxTicksLimit:7, maxRotation:0 }, grid: { color:'rgba(255,255,255,0.04)' } },
+          y: { ticks: { color:'#555', font:{size:10} }, grid: { color:'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // ── routine tab ───────────────────────────────────────
+  function renderRoutine(c) {
+    const list = el('div', 'routine-list');
+    if (data.routine.length === 0) {
+      list.appendChild(el('div', 'empty-state', '<div class="empty-icon">📋</div>No exercises yet. Add one below.'));
+    }
+    data.routine.forEach((ex, i) => {
+      const item = el('div', 'routine-item');
+      const info = el('div', 'routine-info');
+      info.innerHTML = `
+        <div class="routine-name">${ex.name}</div>
+        <div class="routine-meta">${ex.sets} sets × ${ex.reps} ${ex.unit}</div>
+      `;
+      const actions = el('div', 'routine-actions');
+
+      const editBtn = el('button', 'icon-btn', ICON_EDIT);
+      editBtn.setAttribute('aria-label', 'Edit');
+      editBtn.addEventListener('click', () => { ui.modal = { type: 'edit', index: i }; render(); });
+
+      const delBtn = el('button', 'icon-btn danger', ICON_TRASH);
+      delBtn.setAttribute('aria-label', 'Delete');
+      delBtn.addEventListener('click', () => { ui.modal = { type: 'delete', index: i }; render(); });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      item.appendChild(info);
+      item.appendChild(actions);
+      list.appendChild(item);
+    });
+    c.appendChild(list);
+
+    const addBtn = el('button', 'add-btn', '+ Add Exercise');
+    addBtn.addEventListener('click', () => { ui.modal = { type: 'add' }; render(); });
+    c.appendChild(addBtn);
+
+    c.appendChild(el('div', 'routine-note', 'New exercises added here will appear in tomorrow\'s session.'));
+  }
+
+  // ── modal ─────────────────────────────────────────────
+  function renderModal(app) {
+    if (ui.modal.type === 'delete') { renderDeleteModal(app); return; }
+
+    const isEdit    = ui.modal.type === 'edit';
+    const isAddToday = ui.modal.type === 'add-today';
+    const ex = isEdit ? data.routine[ui.modal.index] : { name: '', sets: 3, reps: 15, unit: 'reps' };
+
+    const overlay = el('div', 'modal-overlay');
+    overlay.addEventListener('click', e => { if (e.target === overlay) { ui.modal = null; render(); } });
+
+    const modal = el('div', 'modal');
+    modal.innerHTML = `<div class="modal-handle"></div><h2>${isEdit ? 'Edit Exercise' : isAddToday ? 'Add to Today' : 'New Exercise'}</h2>`;
+
+    const nameField = el('div', 'modal-field', '<label>Exercise Name</label>');
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.placeholder = 'e.g. Bicycle Crunches'; nameInput.value = ex.name;
+    nameField.appendChild(nameInput);
+    modal.appendChild(nameField);
+
+    const row = el('div', 'modal-row');
+    const setsField = el('div', 'modal-field', '<label>Default Sets</label>');
+    const setsInput = document.createElement('input');
+    setsInput.type = 'number'; setsInput.inputMode = 'numeric'; setsInput.min = '1'; setsInput.value = ex.sets;
+    setsField.appendChild(setsInput);
+
+    const repsField = el('div', 'modal-field', '<label>Default Reps / Secs</label>');
+    const repsInput = document.createElement('input');
+    repsInput.type = 'number'; repsInput.inputMode = 'numeric'; repsInput.min = '1'; repsInput.value = ex.reps;
+    repsField.appendChild(repsInput);
+
+    row.appendChild(setsField); row.appendChild(repsField);
+    modal.appendChild(row);
+
+    const unitField = el('div', 'modal-field', '<label>Unit</label>');
+    const unitSel = document.createElement('select');
+    unitSel.innerHTML = `
+      <option value="reps" ${ex.unit === 'reps' ? 'selected' : ''}>Reps</option>
+      <option value="sec"  ${ex.unit === 'sec'  ? 'selected' : ''}>Seconds (time hold)</option>
+    `;
+    unitField.appendChild(unitSel);
+    modal.appendChild(unitField);
+
+    const actions = el('div', 'modal-actions');
+    const cancelBtn = el('button', 'btn-secondary', 'Cancel');
+    cancelBtn.addEventListener('click', () => { ui.modal = null; render(); });
+
+    const saveBtn = el('button', 'btn-primary', isEdit ? 'Save' : 'Add');
+    saveBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) { nameInput.focus(); return; }
+      const exercise = {
+        id:   isEdit ? ex.id : uid(),
+        name,
+        sets: parseInt(setsInput.value) || 3,
+        reps: parseInt(repsInput.value) || 15,
+        unit: unitSel.value,
+      };
+      if (isEdit) {
+        data.routine[ui.modal.index] = exercise;
+      } else if (isAddToday) {
+        // Add only to today's session, not the routine
+        const session = getTodaySession();
+        session.exercises.push({ ...exercise, done: false });
+      } else {
+        data.routine.push(exercise);
+      }
+      saveData();
+      ui.modal = null;
+      render();
+    });
+
+    actions.appendChild(cancelBtn); actions.appendChild(saveBtn);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    app.appendChild(overlay);
+
+    requestAnimationFrame(() => { if (!isEdit) nameInput.focus(); });
+  }
+
+  function renderDeleteModal(app) {
+    const ex = data.routine[ui.modal.index];
+    const overlay = el('div', 'modal-overlay');
+    overlay.addEventListener('click', e => { if (e.target === overlay) { ui.modal = null; render(); } });
+
+    const modal = el('div', 'modal');
+    modal.style.textAlign = 'center';
+    modal.innerHTML = `
+      <div class="modal-handle"></div>
+      <div style="font-size:36px;margin-bottom:12px">🗑</div>
+      <h2>Remove Exercise?</h2>
+      <p style="color:var(--muted);font-size:14px;margin:8px 0 4px">"${ex.name}" will be removed from your routine.</p>
+      <p style="color:var(--muted);font-size:12px">Past session data is kept.</p>
+    `;
+
+    const actions = el('div', 'modal-actions');
+    const cancelBtn = el('button', 'btn-secondary', 'Cancel');
+    cancelBtn.addEventListener('click', () => { ui.modal = null; render(); });
+
+    const delBtn = el('button', 'btn-danger', 'Remove');
+    delBtn.addEventListener('click', () => {
+      data.routine.splice(ui.modal.index, 1);
+      saveData(); ui.modal = null; render();
+    });
+
+    actions.appendChild(cancelBtn); actions.appendChild(delBtn);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    app.appendChild(overlay);
+  }
+
+  // ── export / import ───────────────────────────────────
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `core-backup-${todayStr()}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const imp = JSON.parse(e.target.result);
+          if (imp.routine && imp.sessions) { data = imp; saveData(); render(); }
+          else alert('Invalid backup file.');
+        } catch { alert('Could not read file.'); }
+      };
+      reader.readAsText(file);
+    });
+    input.click();
+  }
+
+  // ── service worker ────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
+
+  // ── init ──────────────────────────────────────────────
+  loadData();
+  render();
+  </script>
+</body>
+</html>
